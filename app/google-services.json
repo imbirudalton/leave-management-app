@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "698007446125",
+    "project_id": "leave-management-app-175dd",
+    "storage_bucket": "leave-management-app-175dd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698007446125:android:745cea366462234522d564",
+        "android_client_info": {
+          "package_name": "com.dalton.myleavemanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1Lnn1_xE80sE1PQQJs_J4a7k3_8MgxvE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
