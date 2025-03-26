@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -84,12 +85,17 @@ fun NavigationComponent(
     val userPreferences = remember { UserPreferences(context) }
     val dbPreferences = remember { DBPreferences(context) }
     val user = userPreferences.userDetails.collectAsState(initial = null)
+    /*val leaveDays = userPreferences.leaveDays.collectAsState(initial = null)
+
+    LaunchedEffect(true) {
+        if (leaveDays.value != null && leaveDays.value == 0) {
+            userPreferences.saveLeaveDays(30)
+        }
+    }*/
 
     NavHost(navController = navController, startDestination = "Login") {
         composable("Login") {
-            val currentUser = remember{ mutableStateOf(Firebase.auth.currentUser) }
-            val user = userPreferences.userDetails.collectAsState(initial = null)
-
+//            val currentUser = remember{ mutableStateOf(Firebase.auth.currentUser) }
             if (user.value != null && user.value?.username?.isNotEmpty() == true) {
 //            if (currentUser.value != null) {
                 navController.navigate("Dashboard") {
@@ -139,7 +145,7 @@ fun NavigationComponent(
             )
         }
         composable("Dashboard") {
-            val user = user.value
+            val user by remember { mutableStateOf(user.value)  }
             when (user?.type) {
                 "Admin", "Manager" -> {
                     AdminScreenRoom(

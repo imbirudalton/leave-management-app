@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,8 +51,11 @@ import androidx.compose.ui.unit.sp
 import com.dalton.myleavemanager.database.room.entities.toLeaveRecord
 import com.dalton.myleavemanager.ui.theme.MyLeaveManagerTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -64,9 +68,29 @@ fun DashboardRoom(
 ) {
 
     val user = userPreferences.userDetails.collectAsState(initial = null)
+    val leaveDays = userPreferences.leaveDays.collectAsState(initial = 0)
     val leaveRecords by viewModel!!.allLeaveRecords.collectAsState(initial = emptyList())
-
+    val coroutineScope = rememberCoroutineScope()
     var showForm = remember { mutableStateOf(false) }
+
+    val nextLeaveDate = remember { mutableStateOf(LocalDateTime.of(2024, 12, 25, 0, 0)) }
+
+    LaunchedEffect(leaveRecords) {
+        if (leaveRecords.isNotEmpty()) {
+            leaveRecords.last().let {
+                val parsedDate = try {
+                    // Parse as LocalDate since startDate is in "yyyy-MM-dd" format
+                    val date = LocalDate.parse(it.startDate, DateTimeFormatter.ISO_DATE)
+                    // Convert to LocalDateTime by setting time to midnight
+                    date.atStartOfDay()
+                } catch (e: Exception) {
+                    // Fallback date
+                    LocalDateTime.of(2024, 12, 25, 0, 0)
+                }
+                nextLeaveDate.value = parsedDate
+            }
+        }
+    }
 
 
     Scaffold(
@@ -84,11 +108,14 @@ fun DashboardRoom(
                     modifier = modifier,
                     userPreferences = userPreferences,
                     onAddLeaveRecord = { newRecord ->
-//                        leaveRecords.add(0, newRecord)
-                        viewModel.insert(newRecord.toLeaveRecordEntity())
-                        showForm.value = false
-                    },
-
+                        coroutineScope.launch {
+                            viewModel.insert(newRecord.toLeaveRecordEntity())
+                            if (newRecord.leaveType == "Annual Leave") {
+                                userPreferences.updateLeaveDays(newRecord.calculateLeaveDays() + 1)
+                            }
+                            showForm.value = false
+                        }
+                    }
                 )
             } else {
 
@@ -180,46 +207,12 @@ fun DashboardRoom(
                                 }
                             }
 
-                            /*Column(
-                                verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(shape = RoundedCornerShape(5.dp))
-                                    .border(
-                                        border = BorderStroke(1.dp, Color(0xff9a8719)),
-                                        shape = RoundedCornerShape(5.dp)
-                                    )
-                                    .padding(
-                                        horizontal = 28.dp,
-                                        vertical = 32.dp
-                                    )
-                            ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
-                                ) {
-                                    Text(
-                                        text = "Annual leave Countdown:",
-                                        color = Color(0xff9a8719),
-                                        style = TextStyle(
-                                            fontSize = 14.sp
-                                        )
-                                    )
-                                    Text(
-                                        text = "120d : 12h: 55m: 09s",
-                                        style = TextStyle(
-                                            fontWeight = FontWeight.W900,
-                                            fontSize = 24.sp
-                                        )
-                                    )
-                                }
 
-
-                            }*/
 
                             LeaveCountdownCard(
                                 totalLeaveDays = 30,
-                                leaveUsed = 20,
-                                nextLeaveDate = LocalDateTime.of(2024, 12, 25, 0, 0)
+                                leaveUsed = leaveDays.value,
+                                nextLeaveDate = nextLeaveDate.value
                             )
 
 //                        val sampleData = generateTestLeaveRecords()
@@ -253,17 +246,15 @@ fun LeaveCountdownCard(
         }
     }
 
-    /*val days = timeRemaining.value.toDays()
-    val hours = timeRemaining.value.toHoursPart()
-    val minutes = timeRemaining.value.toMinutesPart()
-    val seconds = timeRemaining.value.toSecondsPart()*/
-
     val days = timeRemaining.value.toDays()
     val totalHours = timeRemaining.value.toHours() // Total hours including days
     val hours = totalHours - days * 24
     val totalMinutes = timeRemaining.value.toMinutes() // Total minutes including hours and days
     val minutes = totalMinutes - totalHours * 60
     val seconds = timeRemaining.value.seconds % 60
+
+    val hasDayPassed = remember { mutableStateOf(false) }
+    hasDayPassed.value = nextLeaveDate.toLocalDate().isBefore(LocalDate.now())
 
     Card(
         modifier = Modifier
@@ -292,7 +283,7 @@ fun LeaveCountdownCard(
                     style = TextStyle(fontSize = 14.sp)
                 )
                 Text(
-                    text = String.format(
+                    text = if (hasDayPassed.value) "00 : 00 : 00 : 00" else String.format(
                         Locale.getDefault(),
                         "%02dd : %02dh : %02dm : %02ds",
                         days, hours, minutes, seconds

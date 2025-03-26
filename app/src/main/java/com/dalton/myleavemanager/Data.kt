@@ -84,6 +84,26 @@ fun calculateDuration(startDate: String, endDate: String): String {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
+fun LeaveRecord.calculateLeaveDays(): Int {
+    return try {
+        // Define the date format used
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+        // Parse start and end dates
+        val start = LocalDate.parse(startDate, formatter)
+        val end = LocalDate.parse(endDate, formatter)
+
+        // Calculate days between
+        val days = ChronoUnit.DAYS.between(start, end).toInt()
+
+        // Return the duration
+        days
+    } catch (e: Exception) {
+        0 // Return error message if parsing fails
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 fun formatDateRange(startDate: String, endDate: String): String {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val start = LocalDate.parse(startDate, formatter)

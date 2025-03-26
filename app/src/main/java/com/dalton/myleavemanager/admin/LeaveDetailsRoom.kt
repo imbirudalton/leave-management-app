@@ -55,22 +55,25 @@ fun LeaveDetailsScreenRoom(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(
-                        onClick = onApprove,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
+                if (leaveRecord.status == "Pending") {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Text("Approve")
-                    }
-                    Button(
-                        onClick = onDecline,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                    ) {
-                        Text("Decline")
+                        Button(
+                            onClick = onApprove,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
+                        ) {
+                            Text("Approve")
+                        }
+                        Button(
+                            onClick = onDecline,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        ) {
+                            Text("Decline")
+                        }
                     }
                 }
             }

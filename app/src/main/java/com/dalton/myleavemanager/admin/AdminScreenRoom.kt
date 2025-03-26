@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,15 +16,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,12 +42,10 @@ import com.dalton.myleavemanager.DBPreferences
 import com.dalton.myleavemanager.LeaveRecord
 import com.dalton.myleavemanager.LeaveRecordViewModel
 import com.dalton.myleavemanager.StatusBox
-import com.dalton.myleavemanager.YearHeader
 import com.dalton.myleavemanager.YearHeaderRoom
 import com.dalton.myleavemanager.calculateDuration
 import com.dalton.myleavemanager.database.room.entities.toLeaveRecord
 import com.dalton.myleavemanager.extractYear
-import com.dalton.myleavemanager.generateTestLeaveRecords
 import com.dalton.myleavemanager.getLeaveColor
 import com.dalton.myleavemanager.getStatusColor
 import kotlinx.coroutines.launch
@@ -61,12 +62,18 @@ fun AdminScreenRoom(
     val leaveRecords by viewModel!!.allLeaveRecords.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
+    // State for search query
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredRecords = leaveRecords.filter { record ->
+        searchQuery.isEmpty() || record.employeeName.contains(searchQuery, ignoreCase = true) ||
+                record.reason.contains(searchQuery, ignoreCase = true)
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize()
-
     ) { innerPadding ->
 
-        Column (
+        Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(16.dp)
@@ -97,7 +104,6 @@ fun AdminScreenRoom(
                     )
                 }
 
-
                 IconButton(
                     onClick = {
                         onNavigate("Account")
@@ -110,10 +116,24 @@ fun AdminScreenRoom(
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
+
+            // Search TextField
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search Records") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
+                }
+            )
+
+            Spacer(Modifier.height(16.dp))
 
             LeaveRecordsRoom(
-                leaveRecords = leaveRecords.map { it.toLeaveRecord() },
+                leaveRecords = filteredRecords.map { it.toLeaveRecord() },
                 onRecordClicked = {
                     scope.launch {
                         it.id?.let { id ->
@@ -123,11 +143,11 @@ fun AdminScreenRoom(
                     }
                 },
                 modifier = Modifier,
-            ) 
+            )
         }
     }
-
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
