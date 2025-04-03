@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegistrationPage(
     modifier: Modifier = Modifier,
-//    auth: FirebaseAuth = Firebase.auth,
+    auth: FirebaseAuth = Firebase.auth,
     onNavigate: (String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -199,12 +199,12 @@ fun RegistrationPage(
                     }
                     if (isValid) {
                         coroutineScope.launch {
-                          /*  val error = signUp(auth, email, password)
+                            val error = signUp(auth, email, password)
                             if (error == null) {
                                 onNavigate("Login")
                             } else {
                                 registrationError = error
-                            }*/
+                            }
                         }
                     }
                 },
